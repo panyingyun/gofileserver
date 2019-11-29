@@ -1,0 +1,20 @@
+name: gofileserver
+version: git
+summary: An static web server.
+description: |
+  gofileserver just a simple static file server.
+confinement: devmode
+base: core18
+
+parts:
+  gofileserver:
+    plugin: go
+    go-importpath: github.com/panyingyun/gofileserver
+    source: .
+    source-type: git
+    build-packages:
+      - gcc
+
+apps:
+  gofileserver:
+    command: bin/gofileserver
