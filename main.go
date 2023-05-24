@@ -1,7 +1,6 @@
 package main
 
 import (
-	"gofileserver/config"
 	"fmt"
 	"net/http"
 	"os"
@@ -9,18 +8,39 @@ import (
 	"runtime"
 	"syscall"
 
+	"gofileserver/config"
+
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
+func Cors() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		method := c.Request.Method
+		origin := c.Request.Header.Get("Origin")
+		if origin != "" {
+			c.Header("Access-Control-Allow-Origin", "*") // 可将将 * 替换为指定的域名
+			c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
+			c.Header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
+			c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Cache-Control, Content-Language, Content-Type")
+			c.Header("Access-Control-Allow-Credentials", "true")
+		}
+		if method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusNoContent)
+		}
+		c.Next()
+	}
+}
+
 func StartHttpServer(addr string, ftpsdir string) {
 	r := gin.Default()
+	r.Use(Cors())
 	r.StaticFS("/", http.Dir(ftpsdir))
 
 	//=================Mulit file upload=====================
 	//usages:
-	//curl -X POST http://localhost:6001/upload -F "file=@/e/gio/LICENSE" -H "Content-Type: multipart/form-data"
+	//curl -X POST http://localhost:4000/upload -F "file=@/e/gio/LICENSE" -H "Content-Type: multipart/form-data"
 	//=======================================================
 	r.POST("/upload", func(c *gin.Context) {
 		// single file
@@ -41,7 +61,7 @@ func StartHttpServer(addr string, ftpsdir string) {
 
 	//=================Mulit file upload=====================
 	//usages:
-	//curl -X POST http://localhost:6001/uploads -F "files=@/e/gio/go.mod" -F "files=@/e/gio/go.sum" -H "Content-Type: multipart/form-data"
+	//curl -X POST http://localhost:4000/uploads -F "files=@/e/gio/go.mod" -F "files=@/e/gio/go.sum" -H "Content-Type: multipart/form-data"
 	//=======================================================
 	r.POST("/uploads", func(c *gin.Context) {
 		// Multipart form
@@ -77,11 +97,7 @@ func run(c *cli.Context) error {
 
 	//start http server
 	go func() {
-		if runtime.GOOS == "windows" {
-			StartHttpServer(conf.HttpServerWin, conf.DirWin)
-		} else {
-			StartHttpServer(conf.HttpServerLinux, conf.DirLinux)
-		}
+		StartHttpServer(conf.HttpServer, conf.Dir)
 	}()
 
 	//quit when receive end signal

@@ -9,23 +9,21 @@ import (
 
 type Config struct {
 	//HTTP
-	HttpServerWin   string `ini:"http_server_win"`
-	HttpServerLinux string `ini:"http_server_linux"`
+	HttpServer string `ini:"http_server"`
 	//files
-	DirWin   string `ini:"dir_win"`
-	DirLinux string `ini:"dir_linux"`
+	Dir string `ini:"dir"`
 }
 
 func (c Config) String() string {
 
-	http := fmt.Sprintf("HTTP:[%v]/[%v]", c.HttpServerWin, c.HttpServerLinux)
+	http := fmt.Sprintf("HTTP:[%v]", c.HttpServer)
 
-	log := fmt.Sprintf("Dir:[win:%v]/[linux:%v]", c.DirWin, c.DirLinux)
+	log := fmt.Sprintf("Dir:[%v]", c.Dir)
 
 	return http + ", " + log
 }
 
-//Read Server's Config Value from "path"
+// Read Server's Config Value from "path"
 func ReadConfig(path string) (Config, error) {
 	var config Config
 	conf, err := ini.Load(path)
